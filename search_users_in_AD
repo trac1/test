@@ -1,0 +1,51 @@
+
+$forests = (Get-ADForest).Domains
+$show_user_list = @()
+
+$user_input = Read-Host -Prompt ("Please type the username you want to search")
+$number_of_words = $user_input.split(' ').count
+
+if($number_of_words -ge 2 )
+    {    
+        ForEach ($domain in $forests)
+        {
+
+        Write-Host "searchin in $domain"
+        $first_name = $user_input.split(' ')[0]
+        $second_name = $user_input.split(' ')[1]
+    
+        $user = Get-ADUser -filter {sn -eq $first_name -and givenname -eq $second_name} -Server "$domain" -Properties department, name, samaccountname,mail,UserPrincipalName | select department, name, samaccountname,mail,UserPrincipalName
+        $user1 = Get-ADUser -filter {sn -eq $second_name -and givenname -eq $first_name} -Server "$domain" -Properties department, name, samaccountname,mail,UserPrincipalName | select department, name, samaccountname,mail,UserPrincipalName
+        $show_user_list += $user
+        $show_user_list += $user1
+        }
+        }
+        else
+        {
+        
+        #Write-Host "only one"
+        ForEach ($domain in $forests)
+    {
+    Write-Host "searchin in $domain"
+    try
+        {
+        
+            $user = Get-ADUser -filter {samaccountname -eq $user_input} -Server "$domain" -Properties department, name, samaccountname,mail,UserPrincipalName | select department, name, samaccountname,mail,UserPrincipalName
+            $user1 = Get-ADUser -filter {sn -eq $user_input} -Server "$domain" -Properties department, name, samaccountname,mail,UserPrincipalName | select department, name, samaccountname,mail,UserPrincipalName
+            
+            #Write-Host $user
+            $show_user_list += $user
+            $show_user_list += $user1
+        }
+
+     catch
+
+        {
+            $eroare = $Error
+        }
+
+    
+    }
+        }
+
+$show_user_list | Format-table
